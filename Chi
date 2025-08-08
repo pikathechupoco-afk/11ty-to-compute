@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chihuahua Jump</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #a0e0f0; overflow: hidden; font-family: sans-serif; }
+    canvas { display: block; margin: 0 auto; background: #f0f0f0; border: 2px solid #333; }
+    #jumpButton {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 20px 30px;
+      font-size: 18px;
+      background: #ff5722;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <button id="jumpButton">JUMP 🐾</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const jumpBtn = document.getElementById("jumpButton");
+
+    const chihuahua = {
+      x: 100,
+      y: 300,
+      width: 40,
+      height: 40,
+      color: "brown",
+      dy: 0,
+      gravity: 0.8,
+      jumpForce: -12,
+      onGround: true,
+    };
+
+    const obstacles = [];
+    let frameCount = 0;
+    let score = 0;
+
+    function spawnObstacle() {
+      obstacles.push({
+        x: canvas.width,
+        y: 310,
+        width: 50,
+        height: 50,
+        color: "blue",
+      });
+    }
+
+    function drawChihuahua() {
+      ctx.fillStyle = chihuahua.color;
+      ctx.fillRect(chihuahua.x, chihuahua.y, chihuahua.width, chihuahua.height);
+    }
+
+    function drawObstacles() {
+      obstacles.forEach(ob => {
+        ctx.fillStyle = ob.color;
+        ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+      });
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 30);
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Gravity
+      chihuahua.y += chihuahua.dy;
+      chihuahua.dy += chihuahua.gravity;
+
+      // Ground collision
+      if (chihuahua.y + chihuahua.height >= 350) {
+        chihuahua.y = 350 - chihuahua.height;
+        chihuahua.dy = 0;
+        chihuahua.onGround = true;
+      }
+
+      // Obstacles movement
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].x -= 6;
+
+        // Collision detection
+        if (
+          chihuahua.x < obstacles[i].x + obstacles[i].width &&
+          chihuahua.x + chihuahua.width > obstacles[i].x &&
+          chihuahua.y < obstacles[i].y + obstacles[i].height &&
+          chihuahua.y + chihuahua.height > obstacles[i].y
+        ) {
+          alert("Game Over! Final Score: " + score);
+          document.location.reload();
+        }
+
+        // Remove off-screen obstacles
+        if (obstacles[i].x + obstacles[i].width < 0) {
+          obstacles.splice(i, 1);
+          score++;
+        }
+      }
+
+      // Spawn obstacles
+      if (frameCount % 90 === 0) {
+        spawnObstacle();
+      }
+
+      drawChihuahua();
+      drawObstacles();
+      drawScore();
+
+      frameCount++;
+      requestAnimationFrame(update);
+    }
+
+    function jump() {
+      if (chihuahua.onGround) {
+        chihuahua.dy = chihuahua.jumpForce;
+        chihuahua.onGround = false;
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space") jump();
+    });
+
+    jumpBtn.addEventListener("click", jump);
+
+    update();
+  </script>
+</body>
+</html>
